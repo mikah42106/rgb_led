@@ -1,166 +1,57 @@
-#define RED_PIN 9
-#define GREEN_PIN 10
-#define BLUE_PIN 11
-#define MAX_BRIGHTNESS 100
-#define BUTTON_PIN 2
-#define NUM_MODES 2
-#define SLOW_MODE 1
-#define FAST_MODE 2
-byte maxBrightness = 0;
-volatile byte mode = SLOW_MODE;
-volatile boolean modeChange = false;
+#include <Adafruit_NeoPixel.h>
 
-// Function declarations
-void colorFade(byte fromColor, byte toColor, long durationMS = 1000, byte minBrightness = 0, byte maxBrightness = 255);
-void fadeOut(byte color, long durationMS = 1000, byte minBrightness = 0, byte maxBrightness = 255);
-void fadeIn(byte color, long durationMS = 1000, byte minBrightness = 0, byte maxBrightness = 255);
+
+#define PIN 4
+#define LED_COUNT 240
+
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_COUNT, PIN, NEO_GRB + NEO_KHZ800);
+
 
 
 void setup() {
-  // Initialize the color pins as outputs and turn them off
-  pinMode(RED_PIN, OUTPUT);
-  analogWrite(RED_PIN, 0);
-  pinMode(GREEN_PIN, OUTPUT);
-  analogWrite(GREEN_PIN, 0);
-  pinMode(BLUE_PIN, OUTPUT);
-  analogWrite(BLUE_PIN, 0);
-
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(BUTTON_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), handleModeEvent, FALLING);
+  strip.begin();
+  strip.setBrightness(25);
+  strip.show(); // Initialize all pixels to 'off'
 }
 
 
 void loop() {
-
-  // Determine mode and call the appropriate function
-  switch (mode) {
-    case SLOW_MODE:
-      slowMode();
-      break;
-    case FAST_MODE:
-      fastMode();
-      break;
-  }
-
+  // turn them on for some color pattern
+  everyN(0, 2, 255, 0, 0);
+  everyN(1, 2, 0, 255, 0);
+  everyN(4, 5, 0, 0, 255);
+  strip.show(); // Push the updates to the strip
+  delay(random(500, 1000));
+  // Turn them off
+  everyN(0, 1, 0, 0, 0);
+  strip.show();
+  delay(random(500, 1000));
+  // singleChase();
 }
 
-void handleModeEvent() {
-  analogWrite(RED_PIN, 0);
-  analogWrite(GREEN_PIN, 0);
-  modeChange = true;
-
-  // Don't do anything while the button is held down
-  while (digitalRead(BUTTON_PIN) == LOW) {}
-
-  // Increment the mode state and signal the change
-  mode++;
-  
-  // Fix the state (reset back to mode 1 if necessary)
-  if (mode > NUM_MODES) {
-    mode = 1;
-  }
-
-  modeChange = false;
-}
-
-void fastMode() {
-    // Fade red in and out with a random "on" duration
-  maxBrightness = random(5, 100);
-  fadeIn(RED_PIN, 100, 0, maxBrightness);
-  delay(random(200, 1000));
-  fadeOut(RED_PIN, 100, 0, maxBrightness);
-
-  // Fade green in and out with a random "on" duration
-  maxBrightness = random(5, 100);
-  fadeIn(GREEN_PIN, 100, 0, maxBrightness);
-  delay(random(200, 1000));
-  fadeOut(GREEN_PIN, 100, 0, maxBrightness);
-}
-
-void slowMode() {
-  // Fade red in and out with a random "on" duration
-  maxBrightness = random(5, 100);
-  fadeIn(RED_PIN, 500, 0, maxBrightness);
-  delay(random(500, 5000));
-  fadeOut(RED_PIN, 500, 0, maxBrightness);
-
-  // Fade green in and out with a random "on" duration
-  maxBrightness = random(5, 100);
-  fadeIn(GREEN_PIN, 500, 0, maxBrightness);
-  delay(random(500, 5000));
-  fadeOut(GREEN_PIN, 500, 0, maxBrightness);
-}
-
-/*
- * colorFade
- * Fade from one primary color to another. You may optionally set the duration 
- * which is defaulted to one second and you can optionally set the min and max 
- * brightness values.
- * @param fromColor the pin for the color you are changing from
- * @param toColor the pin for the color you are changing to
- * @param durationMS  the amount of time (in milliseconds) you want the fade to take
- * @param minBrightness the lowest brightness value for the colors
- * @param maxBrightness the highest brightness value for the colors
- */
-void colorFade(byte fromColor, byte toColor, long durationMS = 1000, byte minBrightness = 0, byte maxBrightness = 255) {
-  // Calculate the delay time increment required to satisfy the total duration desired
-  long delayIncrement = durationMS / (maxBrightness - minBrightness);
-  long currentTime = 0;
-  for (int i = minBrightness; i <= maxBrightness; i++) {
-    currentTime = millis();
-    analogWrite(fromColor,  maxBrightness - i);
-    analogWrite(toColor, i);
-    while(millis() - currentTime <= delayIncrement && !modeChange) {}
-    if (modeChange) {
-      break;
-    }
+void everyN(byte start, byte inc, byte red, byte green, byte blue) {
+  for (int i = start; i < LED_COUNT; i += inc) {
+    strip.setPixelColor(i, red, green, blue);
   }
 }
 
-/*
- * fadeOut
- * Fade a color out completely. You may optionally set the duration which is defaulted
- * to one second and you can optionally set the min and max brightness values.
- * @param color the pin for the color you are fading out
- * @param durationMS  the amount of time (in milliseconds) you want the fade to take
- * @param minBrightness the lowest brightness value for the colors
- * @param maxBrightness the highest brightness value for the colors
- */
-void fadeOut(byte color, long durationMS = 1000, byte minBrightness = 0, byte maxBrightness = 255) {
-  // Calculate the delay time increment required to satisfy the total duration desired
-  long delayIncrement = durationMS / (maxBrightness - minBrightness);
-  long currentTime = 0;
-  for (int out = maxBrightness; out > minBrightness; out--) {
-    currentTime = millis();
-    analogWrite(color, out);
-    while(millis() - currentTime <= delayIncrement && !modeChange) {}
-    if (modeChange) {
-      break;
-    }
+void singleChase() {
+  uint32_t color = 0;
+  for (int i = 0; i < LED_COUNT; i++) {
+    // Get the color before we change it to blue
+    color = strip.getPixelColor(i);
+    // Change it to blue
+    strip.setPixelColor(i, 0, 0, 255);
+    strip.show();
+    
+    // Wait
+    delay(10);
+
+    // Change it back
+    strip.setPixelColor(i, color);
   }
 }
 
-/*
- * fadeIn
- * Fade a color in completely. You may optionally set the duration which is defaulted
- * to one second and you can optionally set the min and max brightness values.
- * @param color the pin for the color you are fading in
- * @param durationMS  the amount of time (in milliseconds) you want the fade to take
- * @param minBrightness the lowest brightness value for the colors
- * @param maxBrightness the highest brightness value for the colors
- */
-void fadeIn(byte color, long durationMS = 1000, byte minBrightness = 0, byte maxBrightness = 255) {
-  // Calculate the delay time increment required to satisfy the total duration desired
-  long delayIncrement = durationMS / (maxBrightness - minBrightness);
-  long currentTime = 0;
-  for (int in = minBrightness; in <= maxBrightness; in++) {
-    currentTime = millis();
-    analogWrite(color, in);
-    while(millis() - currentTime <= delayIncrement && !modeChange) {}
-    if (modeChange) {
-      break;
-    }
-  }
-}
+void halfAndHalf() {
 
+}
