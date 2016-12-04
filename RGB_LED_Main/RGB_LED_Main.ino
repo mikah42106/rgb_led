@@ -2,7 +2,13 @@
 #define GREEN_PIN 10
 #define BLUE_PIN 11
 #define MAX_BRIGHTNESS 100
+#define BUTTON_PIN 2
+#define NUM_MODES 2
+#define SLOW_MODE 1
+#define FAST_MODE 2
 byte maxBrightness = 0;
+volatile byte mode = SLOW_MODE;
+volatile boolean modeChange = false;
 
 // Function declarations
 void colorFade(byte fromColor, byte toColor, long durationMS = 1000, byte minBrightness = 0, byte maxBrightness = 255);
@@ -18,13 +24,48 @@ void setup() {
   analogWrite(GREEN_PIN, 0);
   pinMode(BLUE_PIN, OUTPUT);
   analogWrite(BLUE_PIN, 0);
-  
+
+  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), handleModeEvent, FALLING);
 }
 
 
 void loop() {
 
-  // Fade red in and out with a random "on" duration
+  // Determine mode and call the appropriate function
+  switch (mode) {
+    case SLOW_MODE:
+      slowMode();
+      break;
+    case FAST_MODE:
+      fastMode();
+      break;
+  }
+
+}
+
+void handleModeEvent() {
+  analogWrite(RED_PIN, 0);
+  analogWrite(GREEN_PIN, 0);
+  modeChange = true;
+
+  // Don't do anything while the button is held down
+  while (digitalRead(BUTTON_PIN) == LOW) {}
+
+  // Increment the mode state and signal the change
+  mode++;
+  
+  // Fix the state (reset back to mode 1 if necessary)
+  if (mode > NUM_MODES) {
+    mode = 1;
+  }
+
+  modeChange = false;
+}
+
+void fastMode() {
+    // Fade red in and out with a random "on" duration
   maxBrightness = random(5, 100);
   fadeIn(RED_PIN, 100, 0, maxBrightness);
   delay(random(200, 1000));
@@ -35,7 +76,20 @@ void loop() {
   fadeIn(GREEN_PIN, 100, 0, maxBrightness);
   delay(random(200, 1000));
   fadeOut(GREEN_PIN, 100, 0, maxBrightness);
-  
+}
+
+void slowMode() {
+  // Fade red in and out with a random "on" duration
+  maxBrightness = random(5, 100);
+  fadeIn(RED_PIN, 500, 0, maxBrightness);
+  delay(random(500, 5000));
+  fadeOut(RED_PIN, 500, 0, maxBrightness);
+
+  // Fade green in and out with a random "on" duration
+  maxBrightness = random(5, 100);
+  fadeIn(GREEN_PIN, 500, 0, maxBrightness);
+  delay(random(500, 5000));
+  fadeOut(GREEN_PIN, 500, 0, maxBrightness);
 }
 
 /*
@@ -52,10 +106,15 @@ void loop() {
 void colorFade(byte fromColor, byte toColor, long durationMS = 1000, byte minBrightness = 0, byte maxBrightness = 255) {
   // Calculate the delay time increment required to satisfy the total duration desired
   long delayIncrement = durationMS / (maxBrightness - minBrightness);
+  long currentTime = 0;
   for (int i = minBrightness; i <= maxBrightness; i++) {
+    currentTime = millis();
     analogWrite(fromColor,  maxBrightness - i);
     analogWrite(toColor, i);
-    delay(delayIncrement);
+    while(millis() - currentTime <= delayIncrement && !modeChange) {}
+    if (modeChange) {
+      break;
+    }
   }
 }
 
@@ -71,9 +130,14 @@ void colorFade(byte fromColor, byte toColor, long durationMS = 1000, byte minBri
 void fadeOut(byte color, long durationMS = 1000, byte minBrightness = 0, byte maxBrightness = 255) {
   // Calculate the delay time increment required to satisfy the total duration desired
   long delayIncrement = durationMS / (maxBrightness - minBrightness);
+  long currentTime = 0;
   for (int out = maxBrightness; out > minBrightness; out--) {
+    currentTime = millis();
     analogWrite(color, out);
-    delay(delayIncrement);
+    while(millis() - currentTime <= delayIncrement && !modeChange) {}
+    if (modeChange) {
+      break;
+    }
   }
 }
 
@@ -89,9 +153,14 @@ void fadeOut(byte color, long durationMS = 1000, byte minBrightness = 0, byte ma
 void fadeIn(byte color, long durationMS = 1000, byte minBrightness = 0, byte maxBrightness = 255) {
   // Calculate the delay time increment required to satisfy the total duration desired
   long delayIncrement = durationMS / (maxBrightness - minBrightness);
+  long currentTime = 0;
   for (int in = minBrightness; in <= maxBrightness; in++) {
+    currentTime = millis();
     analogWrite(color, in);
-    delay(delayIncrement);
+    while(millis() - currentTime <= delayIncrement && !modeChange) {}
+    if (modeChange) {
+      break;
+    }
   }
 }
 
