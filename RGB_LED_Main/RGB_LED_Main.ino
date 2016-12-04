@@ -2,6 +2,7 @@
 #define GREEN_PIN 10
 #define BLUE_PIN 11
 #define MAX_BRIGHTNESS 100
+byte maxBrightness = 0;
 
 // Function declarations
 void colorFade(byte fromColor, byte toColor, long durationMS = 1000, byte minBrightness = 0, byte maxBrightness = 255);
@@ -10,19 +11,31 @@ void fadeIn(byte color, long durationMS = 1000, byte minBrightness = 0, byte max
 
 
 void setup() {
+  // Initialize the color pins as outputs and turn them off
   pinMode(RED_PIN, OUTPUT);
+  analogWrite(RED_PIN, 0);
   pinMode(GREEN_PIN, OUTPUT);
+  analogWrite(GREEN_PIN, 0);
   pinMode(BLUE_PIN, OUTPUT);
+  analogWrite(BLUE_PIN, 0);
+  
 }
 
 
 void loop() {
-//  colorFade(RED_PIN, GREEN_PIN, 4000, 0, 25);
-//  colorFade(GREEN_PIN, RED_PIN, 2000, 0, 25);
-  fadeOut(RED_PIN, 2000, 0, 25);
-  fadeIn(GREEN_PIN, 500, 0, 25);
-  fadeOut(GREEN_PIN, 500, 0, 25);
-  fadeIn(RED_PIN, 2000, 0, 25);
+
+  // Fade red in and out with a random "on" duration
+  maxBrightness = random(5, 100);
+  fadeIn(RED_PIN, 100, 0, maxBrightness);
+  delay(random(200, 1000));
+  fadeOut(RED_PIN, 100, 0, maxBrightness);
+
+  // Fade green in and out with a random "on" duration
+  maxBrightness = random(5, 100);
+  fadeIn(GREEN_PIN, 100, 0, maxBrightness);
+  delay(random(200, 1000));
+  fadeOut(GREEN_PIN, 100, 0, maxBrightness);
+  
 }
 
 /*
