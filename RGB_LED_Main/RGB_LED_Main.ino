@@ -3,6 +3,7 @@
 #define BLUE_PIN 11
 #define MAX_BRIGHTNESS 100
 #define BUTTON_PIN 2
+#define BRIGHTNESS_PIN A0
 #define NUM_MODES 2
 #define SLOW_MODE 1
 #define FAST_MODE 2
@@ -17,6 +18,7 @@ void fadeIn(byte color, long durationMS = 1000, byte minBrightness = 0, byte max
 
 
 void setup() {
+  Serial.begin(115200);
   // Initialize the color pins as outputs and turn them off
   pinMode(RED_PIN, OUTPUT);
   analogWrite(RED_PIN, 0);
@@ -27,19 +29,25 @@ void setup() {
 
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(BRIGHTNESS_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), handleModeEvent, FALLING);
 }
 
 
 void loop() {
+  byte maxBrightness = (analogRead(BRIGHTNESS_PIN) / 1024) * 255;
+  if (maxBrightness <= 50) {
+    maxBrightness = 50;
+  }
+  Serial.println(maxBrightness);
 
   // Determine mode and call the appropriate function
   switch (mode) {
     case SLOW_MODE:
-      slowMode();
+      slowMode(maxBrightness);
       break;
     case FAST_MODE:
-      fastMode();
+      fastMode(maxBrightness);
       break;
   }
 
@@ -64,32 +72,32 @@ void handleModeEvent() {
   modeChange = false;
 }
 
-void fastMode() {
+void fastMode(byte maxBrightness) {
     // Fade red in and out with a random "on" duration
-  maxBrightness = random(5, 100);
-  fadeIn(RED_PIN, 100, 0, maxBrightness);
+  byte brightness = random(5, maxBrightness);
+  fadeIn(RED_PIN, 100, 0, brightness);
   delay(random(200, 1000));
-  fadeOut(RED_PIN, 100, 0, maxBrightness);
+  fadeOut(RED_PIN, 100, 0, brightness);
 
   // Fade green in and out with a random "on" duration
-  maxBrightness = random(5, 100);
-  fadeIn(GREEN_PIN, 100, 0, maxBrightness);
+  brightness = random(5, maxBrightness);
+  fadeIn(GREEN_PIN, 100, 0, brightness);
   delay(random(200, 1000));
-  fadeOut(GREEN_PIN, 100, 0, maxBrightness);
+  fadeOut(GREEN_PIN, 100, 0, brightness);
 }
 
-void slowMode() {
+void slowMode(byte maxBrightness) {
   // Fade red in and out with a random "on" duration
-  maxBrightness = random(5, 100);
-  fadeIn(RED_PIN, 500, 0, maxBrightness);
+  byte brightness = random(50, maxBrightness);
+  fadeIn(RED_PIN, 500, 0, brightness);
   delay(random(500, 5000));
-  fadeOut(RED_PIN, 500, 0, maxBrightness);
+  fadeOut(RED_PIN, 500, 0, brightness);
 
   // Fade green in and out with a random "on" duration
-  maxBrightness = random(5, 100);
-  fadeIn(GREEN_PIN, 500, 0, maxBrightness);
+  brightness = random(5, maxBrightness);
+  fadeIn(GREEN_PIN, 500, 0, brightness);
   delay(random(500, 5000));
-  fadeOut(GREEN_PIN, 500, 0, maxBrightness);
+  fadeOut(GREEN_PIN, 500, 0, brightness);
 }
 
 /*
