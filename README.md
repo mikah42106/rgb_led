@@ -1,2 +1,2 @@
 # rgb_led
-This is a repository for Mikah to test RGB LEDs on an Arduino
+This branch contains the functional code for the circuit I use in my office at work
