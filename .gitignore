@@ -1,6 +1,5 @@
 # PlatformIO
 .pioenvs
-CMakeListsPrivate.txt
 cmake-build-debug
 
 # Compiled Object files
@@ -28,3 +27,6 @@ cmake-build-debug
 # Mac Files
 *.DS_Store
 .piolibdeps
+
+# Jetbrains
+.idea
