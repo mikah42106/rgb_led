@@ -1,0 +1,1 @@
+/home/gberl/.platformio/packages/toolchain-atmelavr/bin/avr-g++  -g  -rdynamic CMakeFiles/rgb_led.dir/src/main.cpp.o  -o rgb_led 

@@ -1,0 +1,4 @@
+/home/gberl/Software/clion-2018.1.2/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/gberl/repos/Arduino/rgb_led
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/gberl/repos/Arduino/rgb_led/cmake-build-debug
